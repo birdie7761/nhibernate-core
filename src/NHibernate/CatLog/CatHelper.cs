@@ -16,13 +16,16 @@ namespace NHibernate.CatLog
         private static List<KeyValuePair<long, String>> durationList = new List<KeyValuePair<long, String>> 
         {
             new KeyValuePair<long, String>(10,"10ms"),
-            new KeyValuePair<long, String>(50,"10~50ms"),
-            new KeyValuePair<long, String>(500,"50~500ms"),
+            new KeyValuePair<long, String>(20,"10~20ms"),
+            new KeyValuePair<long, String>(50,"20~50ms"),
+            new KeyValuePair<long, String>(100,"50~100ms"),
+            new KeyValuePair<long, String>(200,"100~200ms"),
+            new KeyValuePair<long, String>(500,"200~500ms"),
             new KeyValuePair<long, String>(1000,"500~1000ms"),
             new KeyValuePair<long, String>(2000,"1~2s"),
-            new KeyValuePair<long, String>(10000,"2~10s"),
+            new KeyValuePair<long, String>(5000,"2~5s"),
+            new KeyValuePair<long, String>(10000,"5~10s"),
             new KeyValuePair<long, String>(30000,"10~30s"),
-            //{30000,">30s"},
         };
 
         public static Org.Unidal.Cat.Message.ITransaction NewSqlLog(IDbCommand cmd)
