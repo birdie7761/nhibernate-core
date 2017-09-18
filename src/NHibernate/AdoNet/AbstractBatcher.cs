@@ -11,6 +11,10 @@ using NHibernate.SqlCommand;
 using NHibernate.SqlTypes;
 using NHibernate.Util;
 using NHibernate.AdoNet.Util;
+using Org.Unidal.Cat;
+using System.Linq;
+using System.Text;
+using NHibernate.CatLog;
 
 namespace NHibernate.AdoNet
 {
@@ -188,9 +192,9 @@ namespace NHibernate.AdoNet
 			CheckReaders();
 			LogCommand(cmd);
 			Prepare(cmd);
-			Stopwatch duration = null;
-			if (Log.IsDebugEnabled)
-				duration = Stopwatch.StartNew();
+            Stopwatch duration = Stopwatch.StartNew();            
+
+            var cat = CatHelper.NewSqlLog(cmd);
 			try
 			{
 				return cmd.ExecuteNonQuery();
@@ -199,12 +203,15 @@ namespace NHibernate.AdoNet
 			{
 				e.Data["actual-sql-query"] = cmd.CommandText;
 				Log.Error("Could not execute command: " + cmd.CommandText, e);
+                cat.SetStatus(e);
 				throw;
 			}
 			finally
 			{
 				if (Log.IsDebugEnabled && duration != null)
 					Log.DebugFormat("ExecuteNonQuery took {0} ms", duration.ElapsedMilliseconds);
+                CatHelper.DurationEvent(duration,cmd);
+                cat.Complete();
 			}
 		}
 
@@ -213,9 +220,8 @@ namespace NHibernate.AdoNet
 			CheckReaders();
 			LogCommand(cmd);
 			Prepare(cmd);
-			Stopwatch duration = null;
-			if (Log.IsDebugEnabled)
-				duration = Stopwatch.StartNew();
+            Stopwatch duration = Stopwatch.StartNew();
+            var cat = CatHelper.NewSqlLog(cmd);
 			IDataReader reader = null;
 			try
 			{
@@ -225,6 +231,7 @@ namespace NHibernate.AdoNet
 			{
 				e.Data["actual-sql-query"] = cmd.CommandText;
 				Log.Error("Could not execute query: " + cmd.CommandText, e);
+                cat.SetStatus(e);
 				throw;
 			}
 			finally
@@ -234,6 +241,8 @@ namespace NHibernate.AdoNet
 					Log.DebugFormat("ExecuteReader took {0} ms", duration.ElapsedMilliseconds);
 					_readersDuration[reader] = duration;
 				}
+                CatHelper.DurationEvent(duration, cmd);
+                cat.Complete();
 			}
 
 			if (!_factory.ConnectionProvider.Driver.SupportsMultipleOpenReaders)
