@@ -15,6 +15,7 @@ using Org.Unidal.Cat;
 using System.Linq;
 using System.Text;
 using NHibernate.CatLog;
+using Org.Unidal.Cat.Message.Internals;
 
 namespace NHibernate.AdoNet
 {
@@ -192,9 +193,13 @@ namespace NHibernate.AdoNet
 			CheckReaders();
 			LogCommand(cmd);
 			Prepare(cmd);
-            Stopwatch duration = Stopwatch.StartNew();            
+            Stopwatch duration = Stopwatch.StartNew();
 
-            var cat = CatHelper.NewSqlLog(cmd);
+            Org.Unidal.Cat.Message.ITransaction cat = new NullTransaction();
+            if (CatHelper.CatEnable)
+            {
+                cat = CatHelper.NewSqlLog(cmd);
+            }
 			try
 			{
 				return cmd.ExecuteNonQuery();
@@ -221,7 +226,11 @@ namespace NHibernate.AdoNet
 			LogCommand(cmd);
 			Prepare(cmd);
             Stopwatch duration = Stopwatch.StartNew();
-            var cat = CatHelper.NewSqlLog(cmd);
+            Org.Unidal.Cat.Message.ITransaction cat = new NullTransaction();
+            if(CatHelper.CatEnable)
+            {
+                cat = CatHelper.NewSqlLog(cmd);
+            }
 			IDataReader reader = null;
 			try
 			{
@@ -231,7 +240,7 @@ namespace NHibernate.AdoNet
 			{
 				e.Data["actual-sql-query"] = cmd.CommandText;
 				Log.Error("Could not execute query: " + cmd.CommandText, e);
-                cat.SetStatus(e);
+                cat.SetStatus(e) ;
 				throw;
 			}
 			finally

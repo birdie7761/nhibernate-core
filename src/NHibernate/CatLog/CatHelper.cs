@@ -8,11 +8,23 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 using System.Data.Common;
+using System.Configuration;
 
 namespace NHibernate.CatLog
 {
     public static class CatHelper
     {
+        public static Boolean CatEnable;
+        static CatHelper()
+        {
+            var enable = ConfigurationManager.AppSettings["CatTrasactionEnable"];
+            bool blnEnable;
+            if(!String.IsNullOrWhiteSpace(enable) && Boolean.TryParse(enable,out blnEnable))
+            {
+                CatEnable = blnEnable;
+            }
+        }
+        
         public static Org.Unidal.Cat.Message.ITransaction NewSqlLog(IDbCommand cmd)
         {
             var cat = Cat.NewTransaction("SQL", cmd.CommandText);
@@ -46,7 +58,18 @@ namespace NHibernate.CatLog
 
         public static void DurationEvent(Stopwatch watch, IDbCommand cmd)
         {
-            Cat.LogEventDuration(watch, cmd.CommandText);
+            var sqlThreshold = ConfigurationManager.AppSettings["CatSQLTimeThreshold"];
+            long threshold;
+            if(String.IsNullOrWhiteSpace(sqlThreshold) || !long.TryParse(sqlThreshold,out threshold))
+            {
+                threshold = 100;
+            }
+
+            watch.Stop();
+            if (threshold < watch.ElapsedMilliseconds)
+            {
+                Cat.LogEventDuration(watch, cmd.CommandText);
+            }            
         }
     }
 }
